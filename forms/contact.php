@@ -1,41 +1,46 @@
 <?php
-  /**
-  * Requires the "PHP Email Form" library
-  * The "PHP Email Form" library is available only in the pro version of the template
-  * The library should be uploaded to: vendor/php-email-form/php-email-form.php
-  * For more info and help: https://bootstrapmade.com/php-email-form/
-  */
-
-  // Replace contact@example.com with your real receiving email address
-  $receiving_email_address = 'contact@example.com';
-
-  if( file_exists($php_email_form = '../assets/vendor/php-email-form/php-email-form.php' )) {
-    include( $php_email_form );
+$VotreAdresseMail = "nicolas.florentino00@gmail.com"; //mettez ici votre adresse mail
+if (isset($_POST['envoyer'])) { // si le bouton "Envoyer" est appuyé
+  //on vérifie que le champ mail est correctement rempli
+  if (empty($_POST['email'])) {
+    echo "Le champ mail est vide";
   } else {
-    die( 'Unable to load the "PHP Email Form" Library!');
+    //on vérifie que l'adresse est correcte
+    if (!preg_match("#^[a-z0-9_-]+((\.[a-z0-9_-]+){1,})?@[a-z0-9_-]+((\.[a-z0-9_-]+){1,})?\.[a-z]{2,}$#i", $_POST['email'])) {
+      echo "L'adresse mail entrée est incorrecte";
+    } else {
+      //on vérifie que le champ sujet est correctement rempli
+      if (empty($_POST['sujet'])) {
+        echo "Le champ sujet est vide";
+      } else {
+        //on vérifie que le champ message n'est pas vide
+        if (empty($_POST['message'])) {
+          echo "Le champ message est vide";
+        } else {
+
+          if (empty($_POST['name'])) {
+            echo "Le champ nom est vide";
+          } else {
+            //tout est correctement renseigné, on envoi le mail
+            //on renseigne les entêtes de la fonction mail de PHP
+            $Entetes = "MIME-Version: 1.0\r\n";
+            $Entetes .= "Content-type: text/html; charset=UTF-8\r\n";
+            $Entetes .= "From: Nom de votre site <" . $_POST['email'] . ">\r\n"; //de préférence une adresse avec le même domaine de là où, vous utilisez ce code, cela permet un envoie quasi certain jusqu'au destinataire
+            $Entetes .= "Reply-To: Nom de votre site <" . $_POST['email'] . ">\r\n";
+            //on prépare les champs:
+            $Nom = $_POST['name'];
+            $Mail = $_POST['email'];
+            $Sujet = '=?UTF-8?B?' . base64_encode($_POST['subject']) . '?='; //Cet encodage (base64_encode) est fait pour permettre aux informations binaires d'être manipulées par les systèmes qui ne gèrent pas correctement les 8 bits (=?UTF-8?B? est une norme afin de transmettre correctement les caractères de la chaine)
+            $Message = htmlentities($_POST['message'], ENT_QUOTES, "UTF-8"); //htmlentities() converti tous les accents en entités HTML, ENT_QUOTES Convertit en + les guillemets doubles et les guillemets simples, en entités HTML
+            //en fin, on envoi le mail
+            if (mail($VotreAdresseMail, $Sujet, nl2br($Message), $Entetes)) { //la fonction nl2br permet de conserver les sauts de ligne et la fonction base64_encode de conserver les accents dans le titre
+              echo "Le mail à été envoyé avec succès!";
+            } else {
+              echo "Une erreur est survenue, le mail n'a pas été envoyé";
+            }
+          }
+        }
+      }
+    }
   }
-
-  $contact = new PHP_Email_Form;
-  $contact->ajax = true;
-  
-  $contact->to = $receiving_email_address;
-  $contact->from_name = $_POST['name'];
-  $contact->from_email = $_POST['email'];
-  $contact->subject = $_POST['subject'];
-
-  // Uncomment below code if you want to use SMTP to send emails. You need to enter your correct SMTP credentials
-  /*
-  $contact->smtp = array(
-    'host' => 'example.com',
-    'username' => 'example',
-    'password' => 'pass',
-    'port' => '587'
-  );
-  */
-
-  $contact->add_message( $_POST['name'], 'From');
-  $contact->add_message( $_POST['email'], 'Email');
-  $contact->add_message( $_POST['message'], 'Message', 10);
-
-  echo $contact->send();
-?>
+}
